@@ -26,3 +26,9 @@ func TestValidatePathsWithGitDir(t *testing.T) {
 	err := validatePaths(gitDirExists)
 	assert.Nil(t, err)
 }
+
+func TestGetRepositories(t *testing.T) {
+	gitDir := []string{currentDir}
+	_, err := getRepositories(gitDir)
+	assert.Nil(t, err)
+}
