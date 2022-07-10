@@ -9,7 +9,7 @@ This leverages your `git log`, so works best when paired with clear and concise 
 The easiest way to install is through the `go` command.
 
 ```bash
-go install github.com/jdockerty/today@latest # or tag
+go install github.com/jdockerty/today@v0.1.0
 ```
 
 Or by downloading a pre-compiled binary on the [releases](https://github.com/jdockerty/today/releases) page.
