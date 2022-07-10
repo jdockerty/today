@@ -52,42 +52,41 @@ func openGitDir(dir string) (*git.Repository, error) {
 	return repo, nil
 }
 
-func main() {
-
-	flag.Parse()
-
-	// Directories must be tracked by git so that we can read commit messages and use this
-	// as a guide on work done throughout a time period.
-	err := validatePaths(flag.Args())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	dirs := flag.Args()
+// getRepositories will return the git repository definition given a list of directory paths.
+func getRepositories(dirs []string) ([]*git.Repository, error) {
 
 	var repos []*git.Repository
 	for _, dir := range dirs {
 		repo, err := openGitDir(dir)
 		if err != nil {
 			fmt.Printf("Unable to open local directory '%s': %s\n", dir, err)
-			return
+			return nil, err
 		}
 
 		repos = append(repos, repo)
 	}
 
-	for _, repo := range repos {
+	return repos, nil
+}
 
-		// Using current HEAD ref means that we get information about the branch that is currently
-		// being pointed to by git, this might not always be main/master.
+func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration) (map[string][]string, error) {
+
+	msgs := make(map[string][]string)
+
+	for dir, repo := range dirToRepo {
+
+		// Initialise map before populating messages.
+		// This largely comes in handy when a directory is passed where there are no messages in the given 'since' range
+		// so it can be displayed as no messages, as opposed to no output whatsoever.
+		msgs[dir] = []string{}
+
 		ref, err := repo.Head()
 		if err != nil {
-			fmt.Println(err)
+			return nil, err
 		}
 		cIter, err := repo.Log(&git.LogOptions{From: ref.Hash()})
 		if err != nil {
-			fmt.Println(err)
+			return nil, err
 		}
 
 		// Iterate from HEAD ref
@@ -99,11 +98,11 @@ func main() {
 
 			// The UTC time of now - the provided 'since' value.
 			// We use time.Add with a negative number to subtract here, rather than time.Sub, so that we produce a time.Time value to compare, not a time.Duration.
-			timeSince := now.Add(-defaultSince)
+			timeSince := now.Add(-since)
 
-			// If time of commit is 12 hours (or given value) after current time, then it can be displayed.
+			// If time of commit is 12 hours (or given value) after current time, add it to the map.
 			if commitTime.After(timeSince) {
-				fmt.Println(c.Message)
+				msgs[dir] = append(msgs[dir], c.Message)
 				return nil
 			}
 
@@ -111,11 +110,11 @@ func main() {
 		})
 
 		if err != nil {
-			fmt.Println(err)
+			return nil, err
 		}
 	}
 
-	return nil
+	return msgs, nil
 }
 func main() {
 
@@ -131,17 +130,20 @@ func main() {
 
 	dirs := flag.Args()
 
-	var repos []*git.Repository
-	for _, dir := range dirs {
-		repo, err := openGitDir(dir)
-		if err != nil {
-			fmt.Printf("Unable to open local directory '%s': %s\n", dir, err)
-			return
-		}
-
-		repos = append(repos, repo)
+	repos, err := getRepositories(dirs)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 
-	msgs := getCommitMessages(repos)
+	dirToRepo := make(map[string]*git.Repository)
+	for i := 0; i < len(dirs); i++ {
+		dirToRepo[dirs[i]] = repos[i]
+	}
+
+	msgs, err := getCommitMessages(dirToRepo, defaultSince)
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println(msgs)
 }
