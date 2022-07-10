@@ -10,11 +10,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-// Concept:
-// cmd to start = 'today dir(s)'
-// collate messages from `git log` (or better plumbing command) from past 12 hours (default)
-// output messages for work done today
-
 // Default to searching 12 hours of commits for each repository given.
 var defaultSince = 12 * time.Hour
 
