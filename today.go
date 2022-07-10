@@ -109,9 +109,39 @@ func main() {
 
 			return nil
 		})
+
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
 
+	return nil
+}
+func main() {
+
+	flag.Parse()
+
+	// Directories must be tracked by git so that we can read commit messages and use this
+	// as a guide on work done throughout a time period.
+	err := validatePaths(flag.Args())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	dirs := flag.Args()
+
+	var repos []*git.Repository
+	for _, dir := range dirs {
+		repo, err := openGitDir(dir)
+		if err != nil {
+			fmt.Printf("Unable to open local directory '%s': %s\n", dir, err)
+			return
+		}
+
+		repos = append(repos, repo)
+	}
+
+	msgs := getCommitMessages(repos)
+	fmt.Println(msgs)
 }
