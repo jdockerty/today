@@ -10,11 +10,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-// Concept:
-// cmd to start = 'today dir(s)'
-// collate messages from `git log` (or better plumbing command) from past 12 hours (default)
-// output messages for work done today
-
 // Default to searching 12 hours of commits for each repository given.
 var defaultSince = 12 * time.Hour
 
@@ -116,6 +111,7 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration
 
 	return msgs, nil
 }
+
 func main() {
 
 	flag.Parse()
@@ -144,6 +140,17 @@ func main() {
 	msgs, err := getCommitMessages(dirToRepo, defaultSince)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
-	fmt.Println(msgs)
+
+	for dir, commitMsgs := range msgs {
+		fmt.Printf("%s\n", dir)
+
+		if len(commitMsgs) == 0 {
+			fmt.Printf("\tThere are no messages for this directory.\n")
+		}
+		for _, msg := range commitMsgs {
+			fmt.Printf("\t%s\n", msg)
+		}
+	}
 }
