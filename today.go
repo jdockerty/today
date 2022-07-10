@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -13,6 +14,10 @@ import (
 // Since is a flag used to control the amount of time to look back in a repository for commits.
 // The provided time units must be parseable via time.ParseDuration and it defaults to 12 hours.
 var since time.Duration
+
+// Short is a flag for discarding larger commit messages, this will only display the first line of a commit message.
+// This is ideal for repositories where commits may contain longer explanations or reasoning behind the change, but you are familiar with it already.
+var short bool
 
 // validatePaths is used to ensure that only directories that are tracked by git are passed into the application,
 // as these directories are used to track the work which was been done, via commit messages.
@@ -98,7 +103,13 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration
 
 			// If time of commit is 12 hours (or given value) after current time, add it to the map.
 			if commitTime.After(timeSince) {
-				msgs[dir] = append(msgs[dir], c.Message)
+				if short {
+					firstLine, _, _ := strings.Cut(c.Message, "\n")
+					msgs[dir] = append(msgs[dir], firstLine)
+				} else {
+					msgs[dir] = append(msgs[dir], c.Message)
+				}
+
 				return nil
 			}
 
@@ -115,6 +126,7 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration
 
 func main() {
 
+	flag.BoolVar(&short, "short", false, "display the first line of commit messages only")
 	flag.DurationVar(&since, "since", 12*time.Hour, "how far back to check for commits from now")
 	flag.Parse()
 
