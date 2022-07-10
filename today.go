@@ -10,8 +10,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-// Default to searching 12 hours of commits for each repository given.
-var defaultSince = 12 * time.Hour
+// Since is a flag used to control the amount of time to look back in a repository for commits.
+// The provided time units must be parseable via time.ParseDuration and it defaults to 12 hours.
+var since time.Duration
 
 // validatePaths is used to ensure that only directories that are tracked by git are passed into the application,
 // as these directories are used to track the work which was been done, via commit messages.
@@ -114,6 +115,7 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration
 
 func main() {
 
+	flag.DurationVar(&since, "since", 12*time.Hour, "how far back to check for commits from now")
 	flag.Parse()
 
 	// Directories must be tracked by git so that we can read commit messages and use this
@@ -137,7 +139,7 @@ func main() {
 		dirToRepo[dirs[i]] = repos[i]
 	}
 
-	msgs, err := getCommitMessages(dirToRepo, defaultSince)
+	msgs, err := getCommitMessages(dirToRepo, since)
 	if err != nil {
 		fmt.Println(err)
 		return
