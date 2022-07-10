@@ -15,8 +15,8 @@ import (
 // The provided time units must be parseable via time.ParseDuration and it defaults to 12 hours.
 var since time.Duration
 
-// Short is a flag for discarding larger commit messages, this will only display the first line of a commit message.
-// This is ideal for repositories where commits may contain longer explanations or reasoning behind the change, but you are familiar with it already.
+// Short is a flag for condensing larger messages, this will only display the first line of a commit message.
+// This is ideal for repositories where commits may contain longer explanations or reasoning behind the change, but you are familiar with it already and only need a high-level overview.
 var short bool
 
 // validatePaths is used to ensure that only directories that are tracked by git are passed into the application,
