@@ -104,6 +104,7 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration
 			// If time of commit is 12 hours (or given value) after current time, add it to the map.
 			if commitTime.After(timeSince) {
 				if short {
+					// Multi-line commit messages span over newlines, taking the text before this is the main message and the rest can be discarded.
 					firstLine, _, _ := strings.Cut(c.Message, "\n")
 					msgs[dir] = append(msgs[dir], firstLine)
 				} else {
