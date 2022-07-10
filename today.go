@@ -56,6 +56,8 @@ func main() {
 
 	flag.Parse()
 
+	// Directories must be tracked by git so that we can read commit messages and use this
+	// as a guide on work done throughout a time period.
 	err := validatePaths(flag.Args())
 	if err != nil {
 		fmt.Println(err)
