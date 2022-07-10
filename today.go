@@ -116,6 +116,7 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration
 
 	return msgs, nil
 }
+
 func main() {
 
 	flag.Parse()
@@ -145,5 +146,15 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(msgs)
+
+	for dir, commitMsgs := range msgs {
+		fmt.Printf("%s\n", dir)
+
+		if len(commitMsgs) == 0 {
+			fmt.Printf("\tThere are no messages for this directory.\n")
+		}
+		for _, msg := range commitMsgs {
+			fmt.Printf("\t%s\n", msg)
+		}
+	}
 }
