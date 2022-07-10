@@ -22,5 +22,8 @@ Simply pass a local directory that you wish to view the work for, this also work
 ```bash
 today work/very-important-business-app
 
-today work/api work/frontend
+today work/api work/frontend work/new-serivce # You've been very busy
+
+today --since 48h work/frontend # You missed standup yesterday
 ```
+
