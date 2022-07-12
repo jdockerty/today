@@ -3,7 +3,9 @@ package main
 import (
 	"syscall"
 	"testing"
+	"time"
 
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,4 +33,30 @@ func TestGetRepositories(t *testing.T) {
 	gitDir := []string{currentDir}
 	_, err := getRepositories(gitDir)
 	assert.Nil(t, err)
+}
+
+func TestDoesContainAuthor(t *testing.T) {
+	testCommit := &object.Commit{
+		Author: object.Signature{
+			Name:  "testUser",
+			Email: "test@example.com",
+			When:  time.Now().UTC(),
+		},
+	}
+
+	got := containsAuthor(testCommit, "testUser")
+	assert.True(t, got)
+}
+
+func TestDoesNotContainAuthor(t *testing.T) {
+	testCommit := &object.Commit{
+		Author: object.Signature{
+			Name:  "testUser",
+			Email: "test@example.com",
+			When:  time.Now().UTC(),
+		},
+	}
+
+	got := containsAuthor(testCommit, "John")
+	assert.False(t, got)
 }
