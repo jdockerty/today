@@ -19,6 +19,9 @@ var since time.Duration
 // This is ideal for repositories where commits may contain longer explanations or reasoning behind the change, but you are familiar with it already and only need a high-level overview.
 var short bool
 
+// Author is a 'contains' match on the author of a commit. For example, searching for 'John' will display all commits by the author name '*John*'.
+var author string
+
 // validatePaths is used to ensure that only directories that are tracked by git are passed into the application,
 // as these directories are used to track the work which was been done, via commit messages.
 func validatePaths(paths []string) error {
@@ -70,6 +73,11 @@ func getRepositories(dirs []string) ([]*git.Repository, error) {
 	return repos, nil
 }
 
+// containsAuthor will return whether or not the commit contains the provided author.
+func containsAuthor(c *object.Commit, author string) bool {
+	return strings.Contains(c.Author.Name, author)
+}
+
 func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration) (map[string][]string, error) {
 
 	msgs := make(map[string][]string)
@@ -103,14 +111,23 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration
 
 			// If time of commit is 12 hours (or given value) after current time, add it to the map.
 			if commitTime.After(timeSince) {
-				if short {
-					// Multi-line commit messages span over newlines, taking the text before this is the main message and the rest can be discarded.
-					firstLine, _, _ := strings.Cut(c.Message, "\n")
-					msgs[dir] = append(msgs[dir], firstLine)
-				} else {
-					msgs[dir] = append(msgs[dir], c.Message)
+
+				// TODO: Many branches for the combination of flags which manipulate the commit message
+				// that is being returned. Can this be implemented with `flag.Visit` in a cleaner way?
+
+				// Skip commits which do not contain the author name provided
+				if author != "" && !containsAuthor(c, author) {
+					return nil
 				}
 
+				if short {
+					// Multi-line commit messages span over the fold, taking the text before this is the main message and the rest can be discarded.
+					firstLine, _, _ := strings.Cut(c.Message, "\n")
+					msgs[dir] = append(msgs[dir], firstLine)
+					return nil
+				}
+
+				msgs[dir] = append(msgs[dir], c.Message)
 				return nil
 			}
 
@@ -129,6 +146,7 @@ func main() {
 
 	flag.BoolVar(&short, "short", false, "display the first line of commit messages only")
 	flag.DurationVar(&since, "since", 12*time.Hour, "how far back to check for commits from now")
+	flag.StringVar(&author, "author", "", "display commits from a particular author")
 	flag.Parse()
 
 	// Directories must be tracked by git so that we can read commit messages and use this
@@ -167,5 +185,8 @@ func main() {
 		for _, msg := range commitMsgs {
 			fmt.Printf("\t%s\n", msg)
 		}
+
+		// Simple newline before the next entry.
+		fmt.Println()
 	}
 }
