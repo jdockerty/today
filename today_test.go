@@ -21,6 +21,8 @@ var testSignature = &git.CommitOptions{
 
 const thisRepo string = "https://github.com/jdockerty/today"
 
+// TODO: Cleanup the larger tests which use setupRepo func.
+
 func TestValidatePathsProducesErrorWithInvalidDir(t *testing.T) {
 	invalidPath := []string{"/does/not/exist"}
 	err := validatePaths(invalidPath)
@@ -72,6 +74,51 @@ func TestResultsForLargerSinceValue(t *testing.T) {
 
 }
 
+func TestShortCommitMessage(t *testing.T) {
+
+	assert := assert.New(t)
+
+	oneMinuteSince := 1 * time.Minute
+
+	r, err := setupRepo(thisRepo, t)
+	assert.Nil(err)
+
+	w, err := r.Worktree()
+	assert.Nil(err)
+
+	_, err = w.Commit("TEST\nNOT SEEN", testSignature)
+	assert.Nil(err)
+
+	m := make(map[string]*git.Repository, 1)
+	m["today"] = r
+	msgs, err := getCommitMessages(m, true, oneMinuteSince)
+	assert.Nil(err)
+
+	assert.Equal(4, len(msgs["today"][0])) // Length of 'TEST' = 4
+}
+
+func TestLongCommitMessage(t *testing.T) {
+
+	assert := assert.New(t)
+
+	oneMinuteSince := 1 * time.Minute
+
+	r, err := setupRepo(thisRepo, t)
+	assert.Nil(err)
+
+	w, err := r.Worktree()
+	assert.Nil(err)
+
+	_, err = w.Commit("TEST\nSEEN", testSignature)
+	assert.Nil(err)
+
+	m := make(map[string]*git.Repository, 1)
+	m["today"] = r
+	msgs, err := getCommitMessages(m, false, oneMinuteSince)
+	assert.Nil(err)
+
+	assert.Equal("TEST\nSEEN", msgs["today"][0])
+}
 func TestNoResultsForMinimalSinceValue(t *testing.T) {
 
 	assert := assert.New(t)
