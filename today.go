@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 // Since is a flag used to control the amount of time to look back in a repository for commits.
@@ -85,40 +84,41 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration
 		if err != nil {
 			return nil, err
 		}
+
 		cIter, err := repo.Log(&git.LogOptions{From: ref.Hash()})
 		if err != nil {
 			return nil, err
 		}
 
-		// Iterate from HEAD ref
-		// TODO: Very large repositories/monorepos would cause lag here as we iterate all past commits.
-		// 'Lower depth clone' style would help here, although we're working with the local directory, meaning this might be down to the use, similar to `git clone --depth=1 <repo>` to not get the entire history.
-		err = cIter.ForEach(func(c *object.Commit) error {
-			now := time.Now().UTC()
-			commitTime := c.Author.When.UTC()
-
-			// The UTC time of now - the provided 'since' value.
-			// We use time.Add with a negative number to subtract here, rather than time.Sub, so that we produce a time.Time value to compare, not a time.Duration.
-			timeSince := now.Add(-since)
-
-			// If time of commit is 12 hours (or given value) after current time, add it to the map.
-			if commitTime.After(timeSince) {
-				if short {
-					// Multi-line commit messages span over newlines, taking the text before this is the main message and the rest can be discarded.
-					firstLine, _, _ := strings.Cut(c.Message, "\n")
-					msgs[dir] = append(msgs[dir], firstLine)
-				} else {
-					msgs[dir] = append(msgs[dir], c.Message)
-				}
-
-				return nil
-			}
-
-			return nil
-		})
-
+		now := time.Now().UTC()
+		currentCommit, err := cIter.Next()
 		if err != nil {
 			return nil, err
+		}
+
+		commitTime := currentCommit.Author.When.UTC()
+		timeSince := now.Add(-since)
+
+		// Only iterate whilst we meet the criteria of the current commit being before our `since` value.
+		// Once we have reached the commit where this is not the case, we can stop as commits are in chronological order.
+		// Note: We are not accounting for any `--date` manipulation, this will simply use the timestamp it currently has,
+		// meaning that it can stop prematurely if it no longer matches the loop clause.
+		for commitTime.After(timeSince) {
+
+			if short {
+				// Multi-line commit messages span over newlines, taking the text before this is the main message and the rest can be discarded.
+				firstLine, _, _ := strings.Cut(currentCommit.Message, "\n")
+				msgs[dir] = append(msgs[dir], firstLine)
+			} else {
+				msgs[dir] = append(msgs[dir], currentCommit.Message)
+			}
+
+			nextCommit, err := cIter.Next()
+			if err != nil {
+				return nil, err
+			}
+			currentCommit = nextCommit
+			commitTime = currentCommit.Author.When.UTC()
 		}
 	}
 
