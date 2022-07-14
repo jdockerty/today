@@ -166,6 +166,73 @@ func TestResultsForMinimalSinceValue(t *testing.T) {
 
 }
 
+func TestResultsForLargerSinceValue(t *testing.T) {
+
+	assert := assert.New(t)
+
+	r, err := setupRepo(thisRepo, t)
+	assert.Nil(err)
+
+	w, err := r.Worktree()
+	assert.Nil(err)
+
+	_, err = w.Commit("TEST", testSignature)
+	assert.Nil(err)
+	_, err = w.Commit("TEST2", testSignature)
+	assert.Nil(err)
+
+	m := make(map[string]*git.Repository, 1)
+	m["today"] = r
+	msgs, err := getCommitMessages(m, "", true, twoDaysSince)
+	assert.Nil(err)
+
+	assert.Contains(msgs, "today")
+	assert.GreaterOrEqual(2, len(msgs)) // Our 2 commits here and any others which are within 48 hours.
+
+}
+
+func TestShortCommitMessage(t *testing.T) {
+
+	assert := assert.New(t)
+
+	r, err := setupRepo(thisRepo, t)
+	assert.Nil(err)
+
+	w, err := r.Worktree()
+	assert.Nil(err)
+
+	_, err = w.Commit("TEST\nNOT SEEN", testSignature)
+	assert.Nil(err)
+
+	m := make(map[string]*git.Repository, 1)
+	m["today"] = r
+	msgs, err := getCommitMessages(m, "", true, oneMinuteSince)
+	assert.Nil(err)
+
+	assert.Equal(4, len(msgs["today"][0])) // Length of 'TEST' = 4
+}
+
+func TestLongCommitMessage(t *testing.T) {
+
+	assert := assert.New(t)
+
+	r, err := setupRepo(thisRepo, t)
+	assert.Nil(err)
+
+	w, err := r.Worktree()
+	assert.Nil(err)
+
+	_, err = w.Commit("TEST\nSEEN", testSignature)
+	assert.Nil(err)
+
+	m := make(map[string]*git.Repository, 1)
+	m["today"] = r
+	msgs, err := getCommitMessages(m, "", false, oneMinuteSince)
+	assert.Nil(err)
+
+	assert.Equal("TEST\nSEEN", msgs["today"][0])
+}
+
 func setupRepo(url string, t *testing.T) (*git.Repository, error) {
 
 	r, err := git.PlainClone(t.TempDir(), false, &git.CloneOptions{
