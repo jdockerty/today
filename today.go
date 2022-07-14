@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -117,8 +119,18 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, author string, shor
 		// meaning that it can stop prematurely if it no longer matches the loop clause.
 		for commitTime.After(timeSince) {
 
+			// Get the next commit ready here so avoid needing to duplicate logic branches
+			// when needing to skip commits.
+			// TODO: Can we tidy this up in an elegant way?
+			nextCommit, err := cIter.Next()
+			if err != nil {
+				return nil, err
+			}
+
 			// Skip commits which do not contain the author name provided
 			if author != "" && !containsAuthor(currentCommit, author) {
+				currentCommit = nextCommit
+				commitTime = currentCommit.Author.When.UTC()
 				continue
 			}
 
@@ -130,10 +142,6 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, author string, shor
 				msgs[dir] = append(msgs[dir], currentCommit.Message)
 			}
 
-			nextCommit, err := cIter.Next()
-			if err != nil {
-				return nil, err
-			}
 			currentCommit = nextCommit
 			commitTime = currentCommit.Author.When.UTC()
 		}
