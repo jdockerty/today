@@ -97,6 +97,9 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, short bool, since t
 		}
 
 		commitTime := currentCommit.Author.When.UTC()
+
+		// The UTC time of now - the provided 'since' value.
+		// We use time.Add with a negative number to subtract here, rather than time.Sub, so that we produce a time.Time value to compare, not a time.Duration.
 		timeSince := now.Add(-since)
 
 		// Only iterate whilst we meet the criteria of the current commit being before our `since` value.
