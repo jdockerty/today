@@ -69,7 +69,7 @@ func getRepositories(dirs []string) ([]*git.Repository, error) {
 	return repos, nil
 }
 
-func getCommitMessages(dirToRepo map[string]*git.Repository, since time.Duration) (map[string][]string, error) {
+func getCommitMessages(dirToRepo map[string]*git.Repository, short bool, since time.Duration) (map[string][]string, error) {
 
 	msgs := make(map[string][]string)
 
@@ -152,7 +152,7 @@ func main() {
 		dirToRepo[dirs[i]] = repos[i]
 	}
 
-	msgs, err := getCommitMessages(dirToRepo, since)
+	msgs, err := getCommitMessages(dirToRepo, short, since)
 	if err != nil {
 		fmt.Println(err)
 		return
