@@ -75,9 +75,23 @@ func getRepositories(dirs []string) ([]*git.Repository, error) {
 	return repos, nil
 }
 
-// containsAuthor will return whether or not the commit contains the provided author.
+// containsAuthor will return whether the commit contains the provided author.
 func containsAuthor(c *object.Commit, author string) bool {
 	return strings.Contains(c.Author.Name, author)
+}
+
+// getBaseDirectoryName is a simple wrapper for getting the base of the provided directory
+// with added benefit of using the correct current directory when provided.
+func getBaseDirectoryName(p string) (string, error) {
+	if p == "./" {
+		currentDir, err := syscall.Getwd()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Base(currentDir), nil
+	}
+
+	return filepath.Base(p), nil
 }
 
 func getCommitMessages(dirToRepo map[string]*git.Repository, author string, short bool, since time.Duration) (map[string][]string, error) {
@@ -86,10 +100,14 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, author string, shor
 
 	for dir, repo := range dirToRepo {
 
+		sanitisedDir, err := getBaseDirectoryName(dir)
+		if err != nil {
+			return nil, err
+		}
 		// Initialise map before populating messages.
 		// This largely comes in handy when a directory is passed where there are no messages in the given 'since' range
 		// so it can be displayed as no messages, as opposed to no output whatsoever.
-		msgs[dir] = []string{}
+		msgs[sanitisedDir] = []string{}
 
 		ref, err := repo.Head()
 		if err != nil {
