@@ -163,7 +163,7 @@ func main() {
 	err := validatePaths(flag.Args())
 	if err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(2)
 	}
 
 	dirs := flag.Args()
