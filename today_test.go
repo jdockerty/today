@@ -10,18 +10,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var currentDir, _ = syscall.Getwd()
-var testSignature = &git.CommitOptions{
-	Author: &object.Signature{
-		Name:  "testUser",
-		Email: "testEmail",
-		When:  time.Now().UTC(),
-	},
-}
+// TODO: Cleanup the larger tests which use setupRepo func into `suite` tests.
 
-const thisRepo string = "https://github.com/jdockerty/today"
+var (
+	currentDir, _ = syscall.Getwd()
+	testSignature = &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "testUser",
+			Email: "testEmail",
+			When:  time.Now().UTC(),
+		},
+	}
+)
 
-// TODO: Cleanup the larger tests which use setupRepo func.
+const (
+	thisRepo       string        = "https://github.com/jdockerty/today"
+	zeroTime       time.Duration = 0 * time.Minute
+	oneMinuteSince time.Duration = 1 * time.Minute
+	twoDaysSince   time.Duration = 48 * time.Hour
+)
 
 func TestValidatePathsProducesErrorWithInvalidDir(t *testing.T) {
 	invalidPath := []string{"/does/not/exist"}
@@ -47,11 +54,125 @@ func TestGetRepositories(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestResultsForLargerSinceValue(t *testing.T) {
+func TestDoesContainAuthor(t *testing.T) {
+	testCommit := &object.Commit{
+		Author: object.Signature{
+			Name:  "testUser",
+			Email: "test@example.com",
+			When:  time.Now().UTC(),
+		},
+	}
+
+	got := containsAuthor(testCommit, "testUser")
+	assert.True(t, got)
+}
+
+func TestDoesNotContainAuthor(t *testing.T) {
+	testCommit := &object.Commit{
+		Author: object.Signature{
+			Name:  "testUser",
+			Email: "test@example.com",
+			When:  time.Now().UTC(),
+		},
+	}
+
+	got := containsAuthor(testCommit, "John")
+	assert.False(t, got)
+}
+
+func TestFullContainsAuthor(t *testing.T) {
 
 	assert := assert.New(t)
 
-	twoDaysSince := 48 * time.Hour
+	r, err := setupRepo(thisRepo, t)
+	assert.Nil(err)
+
+	w, err := r.Worktree()
+	assert.Nil(err)
+
+	_, err = w.Commit("TEST", testSignature)
+	assert.Nil(err)
+
+	m := make(map[string]*git.Repository, 1)
+	m["today"] = r
+	msgs, err := getCommitMessages(m, testSignature.Author.Name, true, oneMinuteSince)
+	assert.Nil(err)
+
+	assert.Contains(msgs, "today")
+	assert.GreaterOrEqual(2, len(msgs)) // Our 2 commits here and any others which are within 48 hours.
+
+}
+func TestFullContainsAuthorHasNoCommits(t *testing.T) {
+
+	assert := assert.New(t)
+
+	r, err := setupRepo(thisRepo, t)
+	assert.Nil(err)
+
+	w, err := r.Worktree()
+	assert.Nil(err)
+
+	_, err = w.Commit("TEST", testSignature)
+	assert.Nil(err)
+
+	m := make(map[string]*git.Repository, 1)
+	m["today"] = r
+	msgs, err := getCommitMessages(m, "INVALID_COMMIT_AUTHOR", true, oneMinuteSince)
+	assert.Nil(err)
+
+	assert.Contains(msgs, "today")
+	assert.Equal(0, len(msgs["today"]))
+
+}
+
+func TestNoResultsForZeroSinceValue(t *testing.T) {
+
+	assert := assert.New(t)
+
+	r, err := setupRepo(thisRepo, t)
+	assert.Nil(err)
+
+	w, err := r.Worktree()
+	assert.Nil(err)
+
+	_, err = w.Commit("TEST", testSignature)
+	assert.Nil(err)
+
+	m := make(map[string]*git.Repository, 1)
+	m["today"] = r
+	msgs, err := getCommitMessages(m, "", true, zeroTime)
+	assert.Nil(err)
+
+	assert.Equal(0, len(msgs["today"]))
+
+}
+func TestResultsForMinimalSinceValue(t *testing.T) {
+
+	assert := assert.New(t)
+
+	r, err := setupRepo(thisRepo, t)
+	assert.Nil(err)
+
+	w, err := r.Worktree()
+	assert.Nil(err)
+
+	_, err = w.Commit("TEST", testSignature)
+	assert.Nil(err)
+
+	m := make(map[string]*git.Repository, 1)
+	m["today"] = r
+	msgs, err := getCommitMessages(m, "", true, oneMinuteSince)
+	assert.Nil(err)
+
+	assert.Contains(msgs, "today")
+	assert.Equal("TEST", msgs["today"][0]) // We know there is a single message here, as we made it for the test
+	assert.Equal(1, len(msgs))
+
+}
+
+func TestResultsForLargerSinceValue(t *testing.T) {
+
+	assert := assert.New(t)
 
 	r, err := setupRepo(thisRepo, t)
 	assert.Nil(err)
@@ -66,7 +187,7 @@ func TestResultsForLargerSinceValue(t *testing.T) {
 
 	m := make(map[string]*git.Repository, 1)
 	m["today"] = r
-	msgs, err := getCommitMessages(m, true, twoDaysSince)
+	msgs, err := getCommitMessages(m, "", true, twoDaysSince)
 	assert.Nil(err)
 
 	assert.Contains(msgs, "today")
@@ -77,8 +198,6 @@ func TestResultsForLargerSinceValue(t *testing.T) {
 func TestShortCommitMessage(t *testing.T) {
 
 	assert := assert.New(t)
-
-	oneMinuteSince := 1 * time.Minute
 
 	r, err := setupRepo(thisRepo, t)
 	assert.Nil(err)
@@ -91,7 +210,7 @@ func TestShortCommitMessage(t *testing.T) {
 
 	m := make(map[string]*git.Repository, 1)
 	m["today"] = r
-	msgs, err := getCommitMessages(m, true, oneMinuteSince)
+	msgs, err := getCommitMessages(m, "", true, oneMinuteSince)
 	assert.Nil(err)
 
 	assert.Equal(4, len(msgs["today"][0])) // Length of 'TEST' = 4
@@ -100,8 +219,6 @@ func TestShortCommitMessage(t *testing.T) {
 func TestLongCommitMessage(t *testing.T) {
 
 	assert := assert.New(t)
-
-	oneMinuteSince := 1 * time.Minute
 
 	r, err := setupRepo(thisRepo, t)
 	assert.Nil(err)
@@ -114,35 +231,10 @@ func TestLongCommitMessage(t *testing.T) {
 
 	m := make(map[string]*git.Repository, 1)
 	m["today"] = r
-	msgs, err := getCommitMessages(m, false, oneMinuteSince)
+	msgs, err := getCommitMessages(m, "", false, oneMinuteSince)
 	assert.Nil(err)
 
 	assert.Equal("TEST\nSEEN", msgs["today"][0])
-}
-func TestNoResultsForMinimalSinceValue(t *testing.T) {
-
-	assert := assert.New(t)
-
-	oneMinuteSince := 1 * time.Minute
-
-	r, err := setupRepo(thisRepo, t)
-	assert.Nil(err)
-
-	w, err := r.Worktree()
-	assert.Nil(err)
-
-	_, err = w.Commit("TEST", testSignature)
-	assert.Nil(err)
-
-	m := make(map[string]*git.Repository, 1)
-	m["today"] = r
-	msgs, err := getCommitMessages(m, true, oneMinuteSince)
-	assert.Nil(err)
-
-	assert.Contains(msgs, "today")
-	assert.Equal("TEST", msgs["today"][0]) // We know there is a single message here, as we made it for the test
-	assert.Equal(1, len(msgs))
-
 }
 
 func setupRepo(url string, t *testing.T) (*git.Repository, error) {

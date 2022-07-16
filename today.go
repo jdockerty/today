@@ -6,9 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 // Since is a flag used to control the amount of time to look back in a repository for commits.
@@ -18,6 +20,9 @@ var since time.Duration
 // Short is a flag for condensing larger messages, this will only display the first line of a commit message.
 // This is ideal for repositories where commits may contain longer explanations or reasoning behind the change, but you are familiar with it already and only need a high-level overview.
 var short bool
+
+// Author is a 'contains' match on the author of a commit. For example, searching for 'John' will display all commits by the author name '*John*'.
+var author string
 
 // validatePaths is used to ensure that only directories that are tracked by git are passed into the application,
 // as these directories are used to track the work which was been done, via commit messages.
@@ -70,16 +75,40 @@ func getRepositories(dirs []string) ([]*git.Repository, error) {
 	return repos, nil
 }
 
-func getCommitMessages(dirToRepo map[string]*git.Repository, short bool, since time.Duration) (map[string][]string, error) {
+// containsAuthor will return whether the commit contains the provided author.
+func containsAuthor(c *object.Commit, author string) bool {
+	return strings.Contains(c.Author.Name, author)
+}
+
+// getBaseDirectoryName is a simple wrapper for getting the base of the provided directory
+// with added benefit of using the correct current directory when provided.
+func getBaseDirectoryName(p string) (string, error) {
+	if p == "./" || p == "." {
+		currentDir, err := syscall.Getwd()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Base(currentDir), nil
+	}
+
+	return filepath.Base(p), nil
+}
+
+// getCommitMessages is used to map together the repository to a list of valid messages, dependent on the flags that were passed.
+func getCommitMessages(dirToRepo map[string]*git.Repository, author string, short bool, since time.Duration) (map[string][]string, error) {
 
 	msgs := make(map[string][]string)
 
 	for dir, repo := range dirToRepo {
 
+		sanitisedDir, err := getBaseDirectoryName(dir)
+		if err != nil {
+			return nil, err
+		}
 		// Initialise map before populating messages.
 		// This largely comes in handy when a directory is passed where there are no messages in the given 'since' range
 		// so it can be displayed as no messages, as opposed to no output whatsoever.
-		msgs[dir] = []string{}
+		msgs[sanitisedDir] = []string{}
 
 		ref, err := repo.Head()
 		if err != nil {
@@ -109,18 +138,29 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, short bool, since t
 		// meaning that it can stop prematurely if it no longer matches the loop clause.
 		for commitTime.After(timeSince) {
 
-			if short {
-				// Multi-line commit messages span over newlines, taking the text before this is the main message and the rest can be discarded.
-				firstLine, _, _ := strings.Cut(currentCommit.Message, "\n")
-				msgs[dir] = append(msgs[dir], firstLine)
-			} else {
-				msgs[dir] = append(msgs[dir], currentCommit.Message)
-			}
-
+			// Get the next commit ready here so avoid needing to duplicate logic branches
+			// when needing to skip commits.
+			// TODO: Can we tidy this up in an elegant way?
 			nextCommit, err := cIter.Next()
 			if err != nil {
 				return nil, err
 			}
+
+			// Skip commits which do not contain the author name provided
+			if author != "" && !containsAuthor(currentCommit, author) {
+				currentCommit = nextCommit
+				commitTime = currentCommit.Author.When.UTC()
+				continue
+			}
+
+			if short {
+				// Multi-line commit messages span over newlines, taking the text before this is the main message and the rest can be discarded.
+				firstLine, _, _ := strings.Cut(currentCommit.Message, "\n")
+				msgs[sanitisedDir] = append(msgs[sanitisedDir], firstLine)
+			} else {
+				msgs[sanitisedDir] = append(msgs[sanitisedDir], currentCommit.Message)
+			}
+
 			currentCommit = nextCommit
 			commitTime = currentCommit.Author.When.UTC()
 		}
@@ -146,8 +186,9 @@ func main() {
 
 	flag.Usage = printUsage
 
-	flag.BoolVar(&short, "short", false, "display the first line of commit messages only")
+	flag.BoolVar(&short, "short", false, "display only the first line of commit messages")
 	flag.DurationVar(&since, "since", 12*time.Hour, "how far back to check for commits from now")
+	flag.StringVar(&author, "author", "", "display commits from a particular author")
 	flag.Parse()
 
 	if flag.NArg() == 0 {
@@ -177,7 +218,7 @@ func main() {
 		dirToRepo[dirs[i]] = repos[i]
 	}
 
-	msgs, err := getCommitMessages(dirToRepo, short, since)
+	msgs, err := getCommitMessages(dirToRepo, author, short, since)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -192,5 +233,8 @@ func main() {
 		for _, msg := range commitMsgs {
 			fmt.Printf("\t%s\n", msg)
 		}
+
+		// Simple newline before the next entry.
+		fmt.Println()
 	}
 }
