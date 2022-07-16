@@ -1,5 +1,8 @@
 # today
 
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/jdockerty/today?color=blue)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/jdockerty/today?color=black)
+
 View your commit history across multiple directories, ideal for daily standup.
 
 Easily view the work that you have done for the day, or longer, leveraging the power of `git` tracking one or more repositories. This tool is simple to use and requires no extra setup, it simply utilises an pre-existing workflow that you are already familiar with.
