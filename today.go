@@ -94,6 +94,7 @@ func getBaseDirectoryName(p string) (string, error) {
 	return filepath.Base(p), nil
 }
 
+// getCommitMessages is used to map together the repository to a list of valid messages, dependent on the flags that were passed.
 func getCommitMessages(dirToRepo map[string]*git.Repository, author string, short bool, since time.Duration) (map[string][]string, error) {
 
 	msgs := make(map[string][]string)
