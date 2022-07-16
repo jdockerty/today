@@ -156,9 +156,9 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, author string, shor
 			if short {
 				// Multi-line commit messages span over newlines, taking the text before this is the main message and the rest can be discarded.
 				firstLine, _, _ := strings.Cut(currentCommit.Message, "\n")
-				msgs[dir] = append(msgs[dir], firstLine)
+				msgs[sanitisedDir] = append(msgs[sanitisedDir], firstLine)
 			} else {
-				msgs[dir] = append(msgs[dir], currentCommit.Message)
+				msgs[sanitisedDir] = append(msgs[sanitisedDir], currentCommit.Message)
 			}
 
 			currentCommit = nextCommit
