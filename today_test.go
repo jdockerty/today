@@ -10,21 +10,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var currentDir, _ = syscall.Getwd()
-var testSignature = &git.CommitOptions{
-	Author: &object.Signature{
-		Name:  "testUser",
-		Email: "testEmail",
-		When:  time.Now().UTC(),
-	},
-}
-var oneMinuteSince time.Duration = 1 * time.Minute
-var twoDaysSince time.Duration = 48 * time.Hour
-var zeroTime time.Duration = 0 * time.Minute
+// TODO: Cleanup the larger tests which use setupRepo func into `suite` tests.
 
-const thisRepo string = "https://github.com/jdockerty/today"
+var (
+	currentDir, _ = syscall.Getwd()
+	testSignature = &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "testUser",
+			Email: "testEmail",
+			When:  time.Now().UTC(),
+		},
+	}
+)
 
-// TODO: Cleanup the larger tests which use setupRepo func.
+const (
+	thisRepo       string        = "https://github.com/jdockerty/today"
+	zeroTime       time.Duration = 0 * time.Minute
+	oneMinuteSince time.Duration = 1 * time.Minute
+	twoDaysSince   time.Duration = 48 * time.Hour
+)
 
 func TestValidatePathsProducesErrorWithInvalidDir(t *testing.T) {
 	invalidPath := []string{"/does/not/exist"}
