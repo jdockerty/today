@@ -14,7 +14,7 @@ This works best when paired with clear and concise commit messages. A great exam
 The easiest way to install is through the `go` command.
 
 ```bash
-go install github.com/jdockerty/today@latest # or tag, e.g. @v0.1.1
+go install github.com/jdockerty/today@latest # or tag, e.g. @v0.1.2
 ```
 
 Or by downloading a pre-compiled binary on the [releases](https://github.com/jdockerty/today/releases) page.
