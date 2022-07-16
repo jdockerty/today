@@ -131,16 +131,15 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, short bool, since t
 
 
 func printUsage() {
-	fullPath, err := os.Executable()
 	var executableName string
-
+	fullPath, err := os.Executable()
 	if err != nil {
-		executableName = ""
+		executableName = "today"
 	} else {
 		executableName = filepath.Base(fullPath)
 	}
 
-	fmt.Fprintf(os.Stderr, "Usage: %s [options] git_directory_name...\n",executableName)
+        fmt.Fprintf(os.Stderr, "Usage: %s [options] git_directory...\n", executableName)
 	flag.PrintDefaults()
 }
 
@@ -153,7 +152,7 @@ func main() {
 	flag.Parse()
 	
 	if flag.NArg() == 0 {
-		fmt.Fprintf(os.Stderr, "Missing mandatory argument: git_directory_name\n")
+		fmt.Fprintln(os.Stderr, "Missing mandatory argument: git_directory")
 		printUsage()
 		os.Exit(1)
 	}
