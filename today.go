@@ -83,7 +83,7 @@ func containsAuthor(c *object.Commit, author string) bool {
 // getBaseDirectoryName is a simple wrapper for getting the base of the provided directory
 // with added benefit of using the correct current directory when provided.
 func getBaseDirectoryName(p string) (string, error) {
-	if p == "./" {
+	if p == "./" || p == "." {
 		currentDir, err := syscall.Getwd()
 		if err != nil {
 			return "", err
