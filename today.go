@@ -186,7 +186,7 @@ func main() {
 
 	flag.Usage = printUsage
 
-	flag.BoolVar(&short, "short", false, "display the first line of commit messages only")
+	flag.BoolVar(&short, "short", false, "display only the first line of commit messages")
 	flag.DurationVar(&since, "since", 12*time.Hour, "how far back to check for commits from now")
 	flag.StringVar(&author, "author", "", "display commits from a particular author")
 	flag.Parse()
