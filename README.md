@@ -37,7 +37,7 @@ today --author "Jack" projects/backend-api # View commits with author name conta
 
 You can always call `today --help` or `today -h` to view the default help at any time.
 
-### Flag options
+### Flag Options
 
 * `--author` can be used to change which commits are displayed, based on a particular author. **The default is to display all authors.**
     * This filter is done using [`strings.Contains`](https://pkg.go.dev/strings#Contains). As such, multiple authors may be displayed depending on the value provided.
