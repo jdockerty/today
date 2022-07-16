@@ -1,8 +1,10 @@
 # today
 
-Easily view the work that you have done for the day, at a glance, using your `git commit` history. This is ideal for a daily standup where you want to see what you have done in the past.
+View your commit history across multiple directories, ideal for daily standup.
 
-This leverages your `git log`, so works best when paired with clear and concise commit messages. A great example of this is [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/#summary).
+Easily view the work that you have done for the day, or longer, leveraging the power of `git` tracking one or more repositories. This tool is simple to use and requires no extra setup, it simply utilises an pre-existing workflow that you are already familiar with.
+
+This works best when paired with clear and concise commit messages. A great example of this is [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/#summary).
 
 ## Install
 
@@ -16,18 +18,29 @@ Or by downloading a pre-compiled binary on the [releases](https://github.com/jdo
 
 ## Usage
 
-Simply pass a local directory that you wish to view the work for. This also supports multiple directories, as work is not always confined to a single project.
+Simply pass one or more directories that you wish to view the commits for.
 
 ```bash
-today work/very-important-business-app
+today ./ # View the current directory
 
 today work/api work/frontend work/new-important-serivce # You've been very busy
 
 today --since 48h work/api # You missed standup yesterday
 
 today --short work/fun-poc # Only display first line of the commit message
+
+today --author "Jack" projects/backend-api # View commits with author name containing 'Jack'
 ```
 
-Modifying the time range is done using the `--since` flag, valid time units for this conform to [`time.ParseDuration`](https://pkg.go.dev/time#ParseDuration). The main use case for this is to extend or reduce the number of hours you wish to search across, but you may get incredibly precise if you so desire.
+You can always call `today --help` or `today -h` to view the default help at any time.
 
-Using the `--short` flag is useful when commit messages are incredibly descriptive, spanning below the fold to explain the intention of a change.
+### Flag options
+
+* `--author` can be used to change which commits are displayed, based on a particular author. **The default is to display all authors.**
+    * This filter is done using [`strings.Contains`](https://pkg.go.dev/strings#Contains). As such, multiple authors may be displayed depending on the value provided.
+    * This allows you to filter for your own or someone else's commits.
+* `--short` can be used to display only the first line of a commit. **The default is to display the entire commit message.**
+    * Useful when commit messages are incredibly descriptive, spanning below the fold to explain the intention of a change.
+* `--since` can be used to modify the time range. **The default is 12 hours**.
+    * Valid time units must conform to [`time.ParseDuration`](https://pkg.go.dev/time#ParseDuration).
+
