@@ -168,19 +168,40 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, author string, shor
 	return msgs, nil
 }
 
+func printUsage() {
+	var executableName string
+	fullPath, err := os.Executable()
+	if err != nil {
+		executableName = "today"
+	} else {
+		executableName = filepath.Base(fullPath)
+	}
+
+	fmt.Fprintf(os.Stderr, "Usage: %s [options] git_directory...\n", executableName)
+	flag.PrintDefaults()
+}
+
 func main() {
+
+	flag.Usage = printUsage
 
 	flag.BoolVar(&short, "short", false, "display the first line of commit messages only")
 	flag.DurationVar(&since, "since", 12*time.Hour, "how far back to check for commits from now")
 	flag.StringVar(&author, "author", "", "display commits from a particular author")
 	flag.Parse()
 
+	if flag.NArg() == 0 {
+		fmt.Fprintln(os.Stderr, "Missing mandatory argument: git_directory")
+		printUsage()
+		os.Exit(1)
+	}
+
 	// Directories must be tracked by git so that we can read commit messages and use this
 	// as a guide on work done throughout a time period.
 	err := validatePaths(flag.Args())
 	if err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(2)
 	}
 
 	dirs := flag.Args()
