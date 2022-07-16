@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
-	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
 )
@@ -129,7 +129,6 @@ func getCommitMessages(dirToRepo map[string]*git.Repository, short bool, since t
 	return msgs, nil
 }
 
-
 func printUsage() {
 	var executableName string
 	fullPath, err := os.Executable()
@@ -139,7 +138,7 @@ func printUsage() {
 		executableName = filepath.Base(fullPath)
 	}
 
-        fmt.Fprintf(os.Stderr, "Usage: %s [options] git_directory...\n", executableName)
+	fmt.Fprintf(os.Stderr, "Usage: %s [options] git_directory...\n", executableName)
 	flag.PrintDefaults()
 }
 
@@ -150,7 +149,7 @@ func main() {
 	flag.BoolVar(&short, "short", false, "display the first line of commit messages only")
 	flag.DurationVar(&since, "since", 12*time.Hour, "how far back to check for commits from now")
 	flag.Parse()
-	
+
 	if flag.NArg() == 0 {
 		fmt.Fprintln(os.Stderr, "Missing mandatory argument: git_directory")
 		printUsage()
