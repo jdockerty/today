@@ -24,6 +24,12 @@ var short bool
 // Author is a 'contains' match on the author of a commit. For example, searching for 'John' will display all commits by the author name '*John*'.
 var author string
 
+// The switch of whether or not to display the version information
+var version bool
+
+// The semantic version of this executable. Provided by ldflags at build time. This is what is provided for the end user when asked.
+var versionString string = "development"
+
 // validatePaths is used to ensure that only directories that are tracked by git are passed into the application,
 // as these directories are used to track the work which was been done, via commit messages.
 func validatePaths(paths []string) error {
@@ -182,14 +188,24 @@ func printUsage() {
 	flag.PrintDefaults()
 }
 
+func printVersionInfo(){
+	fmt.Println(versionString)
+}
+
 func main() {
 
 	flag.Usage = printUsage
 
 	flag.BoolVar(&short, "short", false, "display only the first line of commit messages")
+	flag.BoolVar(&version, "version", false, "display the version information")
 	flag.DurationVar(&since, "since", 12*time.Hour, "how far back to check for commits from now")
 	flag.StringVar(&author, "author", "", "display commits from a particular author")
 	flag.Parse()
+
+	if version {
+		printVersionInfo()
+		os.Exit(0)
+	}
 
 	if flag.NArg() == 0 {
 		fmt.Fprintln(os.Stderr, "Missing mandatory argument: git_directory")
