@@ -191,8 +191,8 @@ func printUsage() {
 	flag.PrintDefaults()
 }
 
-func printVersionInfo(){
-	fmt.Printf("Version: %s, Commit: %s\n",versionString, commitString)
+func printVersionInfo() {
+	fmt.Printf("Version: %s, Commit: %s\n", versionString, commitString)
 }
 
 func main() {
