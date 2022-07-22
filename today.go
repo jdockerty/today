@@ -30,6 +30,9 @@ var version bool
 // The semantic version of this executable. Provided by ldflags at build time. This is what is provided for the end user when asked.
 var versionString string = "development"
 
+// The current git commit sha provided at build time.
+var commitString string = ""
+
 // validatePaths is used to ensure that only directories that are tracked by git are passed into the application,
 // as these directories are used to track the work which was been done, via commit messages.
 func validatePaths(paths []string) error {
@@ -189,7 +192,7 @@ func printUsage() {
 }
 
 func printVersionInfo(){
-	fmt.Println(versionString)
+	fmt.Printf("Version: %s, Commit: %s",versionString, commitString)
 }
 
 func main() {
