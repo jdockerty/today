@@ -192,7 +192,7 @@ func printUsage() {
 }
 
 func printVersionInfo(){
-	fmt.Printf("Version: %s, Commit: %s",versionString, commitString)
+	fmt.Printf("Version: %s, Commit: %s\n",versionString, commitString)
 }
 
 func main() {
