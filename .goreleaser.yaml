@@ -11,6 +11,8 @@ builds:
       - linux
       - windows
       - darwin
+    ldflags:
+      - -s -w -X main.versionString={{.Version}} -X main.commitString={{.Commit}}
 archives:
   - replacements:
       darwin: Darwin
