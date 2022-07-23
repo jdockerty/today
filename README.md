@@ -39,11 +39,17 @@ You can always call `today --help` or `today -h` to view the default help at any
 
 ### Flag Options
 
-* `--author` can be used to change which commits are displayed, based on a particular author. **The default is to display all authors.**
+* `--author` can be used to change which commits are displayed, based on a particular author.
+    * **The default is to display all authors.**
     * This filter is done using [`strings.Contains`](https://pkg.go.dev/strings#Contains). As such, multiple authors may be displayed depending on the value provided.
     * This allows you to filter for your own or someone else's commits.
-* `--short` can be used to display only the first line of a commit. **The default is to display the entire commit message.**
+* `--colour` can be used to show a preset colourised output to the terminal. Directories which have no commits are shown in red, whilst others which do have commits green.
+    * **The default is no colour.**
+* `--short` can be used to display only the first line of a commit.
+    * **The default is to display the entire commit message.**
     * Useful when commit messages are incredibly descriptive, spanning below the fold to explain the intention of a change.
-* `--since` can be used to modify the time range. **The default is 12 hours**.
+    * This also has a side effect of reducing verbosity.
+* `--since` can be used to modify the time range.
+    * **The default is 12 hours, given in the format of 12h00m00s**.
     * Valid time units must conform to [`time.ParseDuration`](https://pkg.go.dev/time#ParseDuration).
 
