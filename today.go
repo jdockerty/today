@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
@@ -23,6 +24,27 @@ var short bool
 
 // Author is a 'contains' match on the author of a commit. For example, searching for 'John' will display all commits by the author name '*John*'.
 var author string
+
+// Colour will toggle a colourised output for the application.
+var colour bool
+
+var (
+	red   *color.Color = color.New(color.FgRed)
+	green *color.Color = color.New(color.FgGreen)
+)
+
+// displayOutput is a convenience function for outputting to the console, whilst taking into
+// consideration the colour flag. It is expected that the given message is already formatted in the appropriate way.
+func displayOutput(msg string, outputColour *color.Color, colourEnabled bool) {
+	if colourEnabled {
+		color.Set()
+		outputColour.Print(msg)
+		color.Unset()
+		return
+	}
+
+	fmt.Print(msg)
+}
 
 // validatePaths is used to ensure that only directories that are tracked by git are passed into the application,
 // as these directories are used to track the work which was been done, via commit messages.
@@ -187,6 +209,7 @@ func main() {
 	flag.Usage = printUsage
 
 	flag.BoolVar(&short, "short", false, "display only the first line of commit messages")
+	flag.BoolVar(&colour, "colour", false, "Display colourised output")
 	flag.DurationVar(&since, "since", 12*time.Hour, "how far back to check for commits from now")
 	flag.StringVar(&author, "author", "", "display commits from a particular author")
 	flag.Parse()
@@ -225,13 +248,20 @@ func main() {
 	}
 
 	for dir, commitMsgs := range msgs {
-		fmt.Printf("%s\n", dir)
 
+		// When colour is enabled:
+		//   Red = no commits to display for the directory
+		//   Green = there are commits to display
 		if len(commitMsgs) == 0 {
-			fmt.Printf("\tThere are no messages for this directory.\n")
+			displayOutput(dir+"\n", red, colour)
+			displayOutput("\tThere are no messages for this directory.\n\n", red, colour)
+			continue
 		}
+
+		displayOutput(dir+"\n", green, colour)
 		for _, msg := range commitMsgs {
-			fmt.Printf("\t%s\n", msg)
+			formatMsg := fmt.Sprintf("\t%s\n", msg)
+			displayOutput(formatMsg, green, colour)
 		}
 
 		// Simple newline before the next entry.
