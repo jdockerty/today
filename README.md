@@ -43,7 +43,7 @@ You can always call `today --help` or `today -h` to view the default help at any
     * **The default is to display all authors.**
     * This filter is done using [`strings.Contains`](https://pkg.go.dev/strings#Contains). As such, multiple authors may be displayed depending on the value provided.
     * This allows you to filter for your own or someone else's commits.
-* `--colour` can be used to show a preset colourised output to the terminal. Directories which have no commits are shown in red, whilst others which do have commits green.
+* `--colour` can be used to show a preset colourised output to the terminal. Directories which have no commits are shown in red, whilst others are highlighted in green.
     * **The default is no colour.**
 * `--short` can be used to display only the first line of a commit.
     * **The default is to display the entire commit message.**
